@@ -12,5 +12,8 @@ wcluster: $(files)
 %.o: %.cc
 	g++ -Wall -g -O3 -std=c++0x -o $@ -c $< 
 
-clean:
+scrub:
 	rm wcluster basic/*.o *.o
+
+clean:
+	rm basic/*.o *.o

@@ -11,7 +11,7 @@ def get_word_rows():
 def get_cluster_rows():
     for path, rows in itertools.groupby(get_word_rows(), key=lambda x: x[0]):
         wordcounts = [(w,c) for _,w,c in rows]
-        wordcounts.sort(key=lambda (w,c): -c)
+        wordcounts.sort(key=lambda tup: -tup[1])
 
         yield path, len(wordcounts), wordcounts[:50], wordcounts
 
@@ -38,12 +38,12 @@ for path, nwords, wordcounts, allwc in get_cluster_rows():
     wc1 = ' '.join("<span class=w>{w}</span>".format(
         w=htmlescape(w)) for w,c in top(wordcounts, 0.01))
     
-    print """
+    print("""
     <tr>
     <td class=path>^<a target=_blank href="paths/{path}.html">{path}</a> <span class=count>({nwords})</span>
     <td class=words>{wc}
-    """.format(path=path, nwords=nwords, wc=wc1)
-    print "</tr>"
+    """.format(path=path, nwords=nwords, wc=wc1))
+    print("</tr>")
 
     with open(sys.argv[2] + '/paths/{path}.html'.format(**locals()),'w') as f:
         print>>f,"""<style>{style}</style>""".format(**locals())
@@ -55,18 +55,18 @@ for path, nwords, wordcounts, allwc in get_cluster_rows():
         print>>f, "<a href='#freq'>freq</a> <a href='#alpha'>alpha</a> <a href='#suffix'>suffix</a>"
 
         print>>f,"<a name=freq><h2>Words in frequency order</h2></a>"
-        allwc.sort(key=lambda (w,c): (-c,w))
+        allwc.sort(key=lambda tup: (-tup[1], tup[0]))
         print>>f, wc_table(allwc)
         # wc1 = ' '.join("<span class=w>{w}</span>&nbsp;<span class=c>({c})</span>".format(
         #     w=htmlescape(w), c=c) for w,c in allwc)
         # print>>f, wc1
 
         print>>f, "<a name=alpha><h2>Words in alphabetical order</h2></a>"
-        allwc.sort(key=lambda (w,c): (w,-c))
+        allwc.sort(key=lambda tup: (tup[0],-tup[1]))
         print>>f, wc_table(allwc)
 
         print>>f, "<a name=suffix><h2>Words in suffix order</h2></a>"
-        allwc.sort(key=lambda (w,c): (list(reversed(w)),-c))
+        allwc.sort(key=lambda tup: (list(reversed(tup[0])),-tup[1]))
         print>>f, wc_table(allwc, tdword='suffixsort')
         # wc1 = ' '.join("<span class=w>{w}</span>&nbsp;<span class=c>({c})</span>".format(
         #     w=htmlescape(w), c=c) for w,c in allwc)
