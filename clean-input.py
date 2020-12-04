@@ -1,14 +1,17 @@
 from os.path import abspath, exists, split, join
-from sys import argv
+from sys import argv, exit
 import re
 
-class ArgFlag:
-    def __init__(self, flag, longForm=None, description=''):
-        self.flag = flag
+
+class Flag:
+    """A class that represents a flag that could be entered at the command line"""
+
+    def __init__(self, shortForm, longForm=None, description=''):
+        self.shortForm = shortForm
         self.longForm = longForm
         self.description = description
 
-        self.proper_flag = f'-{flag}'
+        self.proper_flag = f'-{shortForm}'
         self.proper_long_flag = f'--{longForm}'
 
     def args_have(self, args: list):
@@ -27,7 +30,17 @@ class ArgFlag:
         
         return False
     
-    def format_description(self, starting_indent_width=8, flag_indent_width=12):
+    def format_description(self, starting_indent_width, flag_indent_width):
+        """Formats this object to print such that
+
+        | <--- starting indent ---> | <---- flag indent ------> |
+                                     -f, --flag                  Description starts...
+                                                                 description continues...
+                                                                 and continues.
+
+
+        for starting and flag indent widths in character length        
+        """
         def n_spaces(n):
             return ' ' * n
         
@@ -51,23 +64,15 @@ class ArgFlag:
     
     __repr__ = __str__
 
-        
-        
 
-flags = {
-    'help': ArgFlag('h', 'help', 'Displays this help prompt'),
-    'write': ArgFlag('w', 'write', 'If set, overwrites the input file \ninstead of making a new one'),
-    'force': ArgFlag('f', 'force', 'Runs without further input, \nusing defaults where necessary')
-}
+class CleanerPrinter:
+    """A class for grouping together the console output behavior of the cleaning program"""
 
-
-def first(_iter: iter, pred=lambda item: True):
-    return next(filter(pred, _iter), None)
-
-def print_help():
-    flag_text = '\n\n'.join(flag.format_description() for flag in flags.values())
-    print(f"""
----  input cleaner help --------------------------------------
+    @staticmethod
+    def print_help(flags):
+        flag_text = '\n\n'.join(flag.format_description(8, 12) for flag in flags)
+        print(
+f"""---  input cleaner help --------------------------------------
     This program expects the relative path to
     an input corpus.
 
@@ -77,94 +82,131 @@ def print_help():
     Optional flags are listed below.
 
     Flags:\n{flag_text}
---------------------------------------------------------------
-    """.strip())
+--------------------------------------------------------------""")
 
-def print_need_args():
-    print_error('This tool requires a file path.\nRun with --help for more information.')
+    @staticmethod
+    def raise_need_file_path():
+        CleanerPrinter.raise_error('This tool requires a file path.\nRun with --help for more information.')
 
-def print_error(text: str):
-    """Prints the text, indenting each line and wrapping in the body in the error box."""
-    print(
-        "---  input cleaner error -------------------------------------\n\t" + 
-        '\n\t'.join(text.splitlines()) + 
-        "\n--------------------------------------------------------------")
+    @staticmethod
+    def raise_error(text: str, do_raise=True):
+        """Prints the text, indenting each line and wrapping in the body in the error box."""
+        print(
+            "---  input cleaner error -------------------------------------\n\t" + 
+            '\n\t'.join(text.splitlines()) + 
+            "\n--------------------------------------------------------------")
+        if do_raise:
+            exit(1)
+
 
 def get_file_line_iter(path):
+    """Creates an iterator over the lines of the file at path. Reads while lines exist."""
     with open(path, 'r') as f:
         while line := f.readline():
             yield line
 
-def get_file_name(old_path):
+def get_cleaned_file_name(old_path):
+    """Creates a file name for the cleaned version over """
     head, name = split(old_path)
     return join(head, 'cleaned-' + name)
 
+def first(_iter: iter, pred=lambda item: True):
+    """Returns the first item in _iter that satisfies pred, or 
+    None of no such item exists"""
+    return next(filter(pred, _iter), None)
+
 def parse_commandline_args():
-    args = argv
+    """Gets the command line args when called, and parses them. Returns an iterable of the 
+    lines for the file to read, and the path of the file to write cleaned lines to.
+    
+    Will call sys.exit if there is a formatting error."""
+    
+    # flags for this program
+    flags = [
+        Flag('h', 'help', 'Displays this help prompt'),
+        Flag('w', 'write', 'If set, overwrites the input file \ninstead of making a new one'),
+        Flag('f', 'force', 'Runs without further input, \nusing defaults where necessary')
+    ]
+
+    args = argv  # get the system input
     if args[0].startswith('clean-input'):
+        # if it's called like:
+        #   python3 clean-input.py ... flags ...
+        # then it includes clean-input.py as a flag which we discard
         args = args[1:]
     
-    if not args:
-        print_need_args()
-        return
-    
-    flag_dict = { name: flag.remove_from_args(args) for name, flag in flags.items() }
+    # read the flag data as { longForm: T/F }, removing identified flags from args
+    # as it constructs set_flags
+    set_flags = { flag.longForm: flag.remove_from_args(args) for flag in flags }
 
-    if flag_dict['help']:
-        print_help()
-        return
+    # if request help, then print help and exit
+    if set_flags['help']:
+        CleanerPrinter.print_help(flags)
+        exit()
     
+    # if there is no file path, raise error
     if not args:
-        print_need_args()
-        return
+        CleanerPrinter.raise_need_file_path()
 
+    # get the first arg that doesn't have the flag prefix "-"
     potential_path = first(args, lambda item: not item.startswith('-'))
     
+    # if it doesn't exist, raise error
     if not potential_path:
-        print_need_args()
-        return
+        CleanerPrinter.raise_need_file_path()
 
+    # remove it from the args
     args.remove(potential_path)
 
+    # use os.abspath to resolve
     potential_path = abspath(potential_path)
-    
+
+    # if it exists, get the file line iterator, otherwise raise exception    
     if exists(potential_path):
         file_lines = get_file_line_iter(potential_path)
     else:
-        print_error(f'Unkown file! \n\t{potential_path}')
-        return
+        CleanerPrinter.raise_error(f'Unkown file! \n\t{potential_path}')
 
+    # raises error on unknown flags/options (which would be all remaining args)
     if args:
         plural = 's' if len(args) > 1 else ''
         error_text = ', '.join(args)
-        print_error(f'Unknown flag{plural}! \n\t{error_text}')
+        CleanerPrinter.raise_error(f'Unknown flag{plural}! \n\t{error_text}')
         
+    do_overwrite_old = set_flags['write']
 
-    overwrite_old = flag_dict['write']
-
-    if overwrite_old and not flag_dict['force']:
+    # if not forced, confirm overwriting corpus
+    if do_overwrite_old and not set_flags['force']:
         confirm = input('Are you sure you want to overwrite the input file? (y or n): ')
-        overwrite_old = confirm in 'y yes Yes YES'.split()
+        do_overwrite_old = confirm in 'y yes Yes YES'.split()
     
-    new_file_path = potential_path if overwrite_old else get_file_name(potential_path)
+    destination_file_path = potential_path if do_overwrite_old else get_cleaned_file_name(potential_path)
 
-    return file_lines, new_file_path
+    return file_lines, destination_file_path
 
 def write_file(path, line_iter: iter):
-    with open(new_file_path, 'w+') as write_file:
-        write_file.writelines(line_iter)
+    """Writes the lines in line_iter to the file at path, or creates a new
+    one if it is not present. Closes the file on completion."""
+    with open(path, 'w+') as target_file:
+        target_file.writelines(line_iter)
 
-cleaning_regex = re.compile(r'([^\w\s]+)\s*')
+# the regex for identifying bunches of punctuation.
+# optionally followed by whitespace.
+# provides the punctuation as group 1.
+punctuation_cleaning_regex = re.compile(r'([^\w\s]+)\s*')
+# the regex to substitute captured bunches of punctuation.
+# simply surrounds it with spaces.
+punctuation_sub_regex = r' \g<1> '
 def clean_line(line):
-    return re.sub(cleaning_regex, r' \g<1> ', line).strip() + '\n'
+    """Spaces out each bunch of symbols, and terminates with a single newline."""
+    cleaned = re.sub(punctuation_cleaning_regex, punctuation_sub_regex, line).strip()
+    return cleaned + '\n'
 
+def clean_corpus(file_lines: iter, target_path):
+    """Cleans each line in file_lines, and writes to the target_path. Creates
+    a new file if no such file at target_path exists."""
+    write_file(target_path, map(clean_line, file_lines))
 
 if __name__ == "__main__":
     if parse_result := parse_commandline_args():
-        file_lines, new_file_path = parse_result
-        write_file(new_file_path, map(clean_line, file_lines))
-        
-
-
-
-        
+        clean_corpus(*parse_result)
