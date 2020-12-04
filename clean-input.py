@@ -217,6 +217,5 @@ def clean_corpus(file_lines: iter, target_path):
 
 if __name__ == "__main__":
     if parse_result := parse_commandline_args():
-        file_lines, target_path = parse_result
-        clean_corpus(file_lines, target_path)
+        clean_corpus(*parse_result)
         CleanerPrinter.print_success()
