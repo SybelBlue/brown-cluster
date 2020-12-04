@@ -1,5 +1,6 @@
 from os.path import abspath, exists, split, join
-import sys
+from sys import argv
+import re
 
 class ArgFlag:
     def __init__(self, flag, longForm=None, description=''):
@@ -54,8 +55,8 @@ class ArgFlag:
         
 
 flags = {
-    'help': ArgFlag('h', 'help', 'Displays the help prompt'),
-    'write': ArgFlag('w', 'write', 'If present, overwrites the input file'),
+    'help': ArgFlag('h', 'help', 'Displays this help prompt'),
+    'write': ArgFlag('w', 'write', 'If set, overwrites the input file \ninstead of making a new one'),
     'force': ArgFlag('f', 'force', 'Runs without further input, \nusing defaults where necessary')
 }
 
@@ -99,7 +100,10 @@ def get_file_name(old_path):
     return join(head, 'cleaned-' + name)
 
 def parse_commandline_args():
-    args = sys.argv[1:]
+    args = argv
+    if args[0].startswith('clean-input'):
+        args = args[1:]
+    
     if not args:
         print_need_args()
         return
@@ -146,12 +150,13 @@ def parse_commandline_args():
 
     return file_lines, new_file_path
 
-def write_file(path, lineIter: iter):
+def write_file(path, line_iter: iter):
     with open(new_file_path, 'w+') as write_file:
-        write_file.writelines(lineIter)
+        write_file.writelines(line_iter)
 
+cleaning_regex = re.compile(r'([^\w\s]+)\s*')
 def clean_line(line):
-    return line
+    return re.sub(cleaning_regex, r' \g<1> ', line).strip() + '\n'
 
 
 if __name__ == "__main__":
