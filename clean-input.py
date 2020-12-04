@@ -1,5 +1,5 @@
 from os.path import abspath, exists, split, join
-from sys import argv, exit
+from sys import argv, exit, stderr
 import re
 
 
@@ -94,7 +94,9 @@ f"""---  input cleaner help --------------------------------------
         print(
             "---  input cleaner error -------------------------------------\n\t" + 
             '\n\t'.join(text.splitlines()) + 
-            "\n--------------------------------------------------------------")
+            "\n--------------------------------------------------------------",
+            file=stderr
+        )
         if do_raise:
             exit(1)
     
