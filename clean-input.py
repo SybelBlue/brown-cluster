@@ -99,10 +99,10 @@ f"""---  input cleaner help --------------------------------------
             exit(1)
     
     @staticmethod
-    def print_success(target_path):
+    def print_success():
         print(
             "---  input cleaner success -----------------------------------\n\t" + 
-            "File Written!\n\t" + target_path +
+            "File Written!" +
             "\n--------------------------------------------------------------")
 
 
@@ -219,4 +219,4 @@ if __name__ == "__main__":
     if parse_result := parse_commandline_args():
         file_lines, target_path = parse_result
         clean_corpus(file_lines, target_path)
-        CleanerPrinter.print_success(target_path)
+        CleanerPrinter.print_success()
