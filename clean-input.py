@@ -97,6 +97,14 @@ f"""---  input cleaner help --------------------------------------
             "\n--------------------------------------------------------------")
         if do_raise:
             exit(1)
+    
+    @staticmethod
+    def print_success(target_path):
+        print(
+            "---  input cleaner success -----------------------------------\n\t" + 
+            "File Written!\n\t" + target_path +
+            "\n--------------------------------------------------------------")
+
 
 
 def get_file_line_iter(path):
@@ -171,7 +179,7 @@ def parse_commandline_args():
     if args:
         plural = 's' if len(args) > 1 else ''
         error_text = ', '.join(args)
-        CleanerPrinter.raise_error(f'Unknown flag{plural}! \n\t{error_text}')
+        CleanerPrinter.raise_error(f'Unknown flag{plural}! \n\t{error_text}', do_raise=not set_flags['force'])
         
     do_overwrite_old = set_flags['write']
 
@@ -209,4 +217,6 @@ def clean_corpus(file_lines: iter, target_path):
 
 if __name__ == "__main__":
     if parse_result := parse_commandline_args():
-        clean_corpus(*parse_result)
+        file_lines, target_path = parse_result
+        clean_corpus(file_lines, target_path)
+        CleanerPrinter.print_success(target_path)
