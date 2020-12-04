@@ -10,6 +10,7 @@ class TreeNode:
 
         # list of (word, count) pairs
         self.words = []
+        self.value = 0
 
     def get_child(self, right: bool):
         return self.right_child if right else self.left_child
@@ -47,8 +48,19 @@ class TreeNode:
     def add_word(self, word, count):
         self.words.append((word, count))
 
+    def get_weight(self):
+        value = sum(c for _, c in self.words)
+        if self.right_child:
+            value += self.right_child.get_weight()
+        if self.left_child:
+            value += self.left_child.get_weight()
+        self.value = value
+        return value
+
     def __str__(self):
         s = f'TreeNode "{self.label}"'
+        if self.value:
+            s += f' ({self.value})'
         if self.words:
             s += f' {self.words}'
         if self.left_child or self.right_child:
@@ -64,6 +76,28 @@ class TreeNode:
         if s == '1':
             return True
         return None
+
+    def pretty_format(self, digitsLen=None, joinLines=True):
+        if digitsLen is None:
+            digitsLen = len(str(self.value))
+        padding = (digitsLen - len(str(self.value))) * ' '
+        lines = [f'Node {self.label} {padding}{self.value} --']
+
+        if not self.left_child and not self.right_child:
+            return '\n'.join(lines) if joinLines else lines
+
+        indent_width = max(map(len, lines)) + 1
+        child_lines = self.left_child.pretty_format(digitsLen, False) if self.left_child else []
+        if self.right_child:
+            child_lines.extend(self.right_child.pretty_format(digitsLen, False))
+
+        for i, line in enumerate(child_lines):
+            if len(lines) == i:
+                lines.append(' ' * indent_width + '| ' + line)
+            else:
+                lines[i] += ' ' * (indent_width - len(lines[i])) + '| ' + line
+
+        return '\n'.join(lines) if joinLines else lines
 
 
 class TreeBuilder:
@@ -93,7 +127,7 @@ class TreeBuilder:
         segments = line.split()
         
         if len(segments) != 3:
-            raise AttributeError(f'Unexpected formatting at: \n{line_no}\t{line}\nRequires three words.')
+            raise AttributeError(f'Unexpected formatting at: \n line {line_no} | {line}Expected three words.')
 
         path, word, count = segments
         return path, word, int(count)
@@ -107,13 +141,14 @@ class TreeBuilder:
         self.tree[path].add_word(word, count)
         return True
     
-    def parse_lines(self):
+    def build_tree(self):
         while self.parse_next_line():
             pass
 
-        return self.tree
+        weight = self.tree.get_weight()
+        return self.tree, weight
 
 
 if __name__ == "__main__":
-    tree = TreeBuilder('./input-c50-p1.out/paths').parse_lines()
-    print(tree)
+    tree, weight = TreeBuilder('./lolcat-c50-p1.out/paths').build_tree()
+    print(tree.pretty_format())
