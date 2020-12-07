@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import itertools as it
+
 class TreeNode:
     def __init__(self, label):
         self.label = label
@@ -48,12 +50,12 @@ class TreeNode:
     def add_word(self, word, count):
         self.words.append((word, count))
 
-    def get_weight(self):
+    def compute_weight(self):
         value = sum(c for _, c in self.words)
         if self.right_child:
-            value += self.right_child.get_weight()
+            value += self.right_child.compute_weight()
         if self.left_child:
-            value += self.left_child.get_weight()
+            value += self.left_child.compute_weight()
         self.value = value
         return value
 
@@ -105,6 +107,7 @@ class TreeBuilder:
         self.path = path
         self.file_line_iter = TreeBuilder.file_line_iter(path)
         self.tree = TreeNode('')
+        self.leaf_paths = set()
 
     @staticmethod
     def file_line_iter(path):
@@ -138,6 +141,7 @@ class TreeBuilder:
             return False
         
         path, word, count = tokens
+        self.leaf_paths.add(path)
         self.tree[path].add_word(word, count)
         return True
     
@@ -145,10 +149,64 @@ class TreeBuilder:
         while self.parse_next_line():
             pass
 
-        weight = self.tree.get_weight()
-        return self.tree, weight
+        # compute the weights
+        self.tree.compute_weight()
+
+        return self.tree
+
+    @staticmethod
+    def distance(label0: str, label1: str):
+        """Returns the number of nodes required to travel from node0 to node1"""
+        # Consider the following example lables
+        #        label0: 11010101
+        #        label1: 110110
+        # common prefix: 1101 (lowest common ancestor)
+        # They share the prefix 1101 which is the path of
+        # the lowest common ancestor. Therefore the distance 
+        # between them is the sum of the lengths of the unique
+        # suffixes '0101' and '10', ie 6 nodes apart.
+        # 
+        # This can be computed as the sum of lengths of each label
+        # minus twice the size of the shared prefix.
+        #
+        # Note that if and only if the labels are the same, the dist is 0.
+        # (if the lengths are different, zip will stop before dist is 0)
+        # (if the contents are different, for will break before dist is 0)
+        dist = len(label0) + len(label1)
+        
+        for l0, l1 in zip(label0, label1):
+            if l0 == l1:
+                dist -= 2
+            else:
+                break
+        
+        return dist
+
+    @staticmethod
+    def min_dist_to_lca(label0: str, label1: str):
+        min_label_length = min(len(label0), len(label1))
+        return min_label_length - TreeBuilder.lca_depth(label0, label1)
+
+    @staticmethod
+    def max_dist_to_lca(label0: str, label1: str):
+        max_label_length = max(len(label0), len(label1))
+        return max_label_length - TreeBuilder.lca_depth(label0, label1)
+
+    @staticmethod
+    def lca_depth(label0: str, label1: str):
+        for i, (l0, l1) in enumerate(zip(label0, label1)):
+            if l0 != l1:
+                return i + 1
+        return min(len(label0), len(label1))
+    
+    @staticmethod
+    def lca_label(label0: str, label1: str):
+        return label0[:TreeBuilder.lca_depth(label0, label1)]
+        
 
 
 if __name__ == "__main__":
-    tree, weight = TreeBuilder('./lolcat-c50-p1.out/paths').build_tree()
+    builder = TreeBuilder('./lolcat-c50-p1.out/paths')
+    tree = builder.build_tree()
     print(tree.pretty_format())
+    print(len(builder.leaf_paths))
