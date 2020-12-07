@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import itertools as it
-
 class TreeNode:
     def __init__(self, label):
         self.label = label
@@ -204,9 +202,8 @@ class TreeBuilder:
         return label0[:TreeBuilder.lca_depth(label0, label1)]
         
 
-
 if __name__ == "__main__":
     builder = TreeBuilder('./lolcat-c50-p1.out/paths')
     tree = builder.build_tree()
     print(tree.pretty_format())
-    print(len(builder.leaf_paths))
+    print('leaf pathes:', len(builder.leaf_paths))
