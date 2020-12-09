@@ -1,18 +1,16 @@
 from sys import argv
+from ast import literal_eval
 
 class Flag:
     """A class that represents a flag that could be entered at the command line"""
 
     def __init__(self, shortForm, longForm=None, description=''):
         self.shortForm = shortForm
-        self.longForm = longForm
+        self.longForm = longForm if longForm else shortForm
         self.description = description
 
-        self.proper_flag = f'-{shortForm}'
-        self.proper_long_flag = f'--{longForm}'
-
-    def args_have(self, args: list):
-        return self.proper_flag in args or self.proper_long_flag in args
+        self.proper_flag = f'-{self.shortForm}'
+        self.proper_long_flag = f'--{self.longForm}'
     
     def remove_from_args(self, args: list):
         """Returns true if this flag is present in the args list, false otherwise.
@@ -57,7 +55,7 @@ class Flag:
         return lines
 
     def __str__(self):
-        return f'ArgFlag({self.flag}, {self.longForm})'
+        return f'Flag({self.shortForm}, {self.longForm})'
     
     __repr__ = __str__
 
@@ -65,3 +63,43 @@ class Flag:
     def get_terminal_args():
         """Gets the command line args, minus the name of the file executing"""
         return argv[1:]
+
+
+class LiteralFlag(Flag):
+    def __init__(self, shortForm, longForm=None, description=''):
+        Flag.__init__(self, shortForm, longForm, description)
+        self.value = None
+
+    def __str__(self):
+        return f'LiteralFlag({self.shortForm}, {self.longForm}: {self.value})'
+    
+    __repr__ = __str__
+
+    def remove_from_args(self, args: list):
+        """Returns true if this flag is present in the args list, false otherwise.
+        Will also remove the flag and its value from args if present."""
+        if self.proper_flag in args:
+            i = args.index(self.proper_flag)        
+        elif self.proper_long_flag in args:
+            i = args.index(self.proper_long_flag)
+        else:        
+            return False
+        
+        del args[i]
+
+        if i == len(args):
+            return True
+        
+        self.value = literal_eval(args[i])
+        del args[i]
+        
+        return True
+
+
+if __name__ == "__main__":
+    f = LiteralFlag('c', description='desc')
+    print(f.proper_long_flag)
+    print(f)
+    test_args = "-c [1,2,3]".split()
+    f.remove_from_args(test_args)
+    print(f, test_args)
