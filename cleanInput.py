@@ -1,6 +1,6 @@
 from os.path import abspath, exists, split, join
 from sys import exit, stderr
-import re
+from re import compile, sub
 
 from flag import Flag
 
@@ -137,13 +137,13 @@ def write_file(path, line_iter: iter):
 # the regex for identifying bunches of punctuation.
 # optionally followed by whitespace.
 # provides the punctuation as group 1.
-punctuation_cleaning_regex = re.compile(r'([^\w\s]+)\s*')
+punctuation_cleaning_regex = compile(r'([^\w\s]+)\s*')
 # the regex to substitute captured bunches of punctuation.
 # simply surrounds it with spaces.
 punctuation_sub_regex = r' \g<1> '
 def clean_line(line):
     """Spaces out each bunch of symbols, and terminates with a single newline."""
-    cleaned = re.sub(punctuation_cleaning_regex, punctuation_sub_regex, line).strip()
+    cleaned = sub(punctuation_cleaning_regex, punctuation_sub_regex, line).strip()
     return cleaned + '\n'
 
 def clean_corpus(file_lines: iter, target_path):
