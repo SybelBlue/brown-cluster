@@ -101,9 +101,9 @@ class TreeNode:
 
 
 class TreeBuilder:
-    def __init__(self, path):
+    def __init__(self, path, line_iter=None):
         self.path = path
-        self.file_line_iter = TreeBuilder.file_line_iter(path)
+        self.file_line_iter = TreeBuilder.file_line_iter(path) if line_iter is None else line_iter
         self.tree = TreeNode('')
         self.leaf_paths = set()
 
@@ -125,10 +125,14 @@ class TreeBuilder:
         if not line:
             return self.tokenize_next_line()
         
+        return TreeBuilder.tokenize_line(line_no, line)
+    
+    @staticmethod
+    def tokenize_line(line_number, line):
         segments = line.split()
         
         if len(segments) != 3:
-            raise AttributeError(f'Unexpected formatting at: \n line {line_no} | {line}Expected three words.')
+            raise AttributeError(f'Unexpected formatting at: \n line {line_number} | {line}Expected three words.')
 
         path, word, count = segments
         return path, word, int(count)
@@ -200,7 +204,7 @@ class TreeBuilder:
     @staticmethod
     def lca_label(label0: str, label1: str):
         return label0[:TreeBuilder.lca_depth(label0, label1)]
-        
+
 
 if __name__ == "__main__":
     builder = TreeBuilder('./lolcat-c50-p1.out/paths')
