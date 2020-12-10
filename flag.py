@@ -97,9 +97,10 @@ class LiteralFlag(Flag):
 
 
 if __name__ == "__main__":
-    f = LiteralFlag('c', description='desc')
-    print(f.proper_long_flag)
+    f = LiteralFlag('t', 'test', 'description')
+    print(f.format_description(2, 5))
+    args = Flag.get_terminal_args()
+    print('starting args:', args)
+    f.remove_from_args(args)
     print(f)
-    test_args = "-c [1,2,3]".split()
-    f.remove_from_args(test_args)
-    print(f, test_args)
+    print('ending args:', args)
