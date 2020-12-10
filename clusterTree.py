@@ -102,6 +102,7 @@ class TreeNode:
 
 class TreeBuilder:
     def __init__(self, path, line_iter=None):
+        """Sets up to parse the tree at path using the file_line_iter if line_iter is None"""
         self.path = path
         self.file_line_iter = TreeBuilder.file_line_iter(path) if line_iter is None else line_iter
         self.tree = TreeNode('')
@@ -109,6 +110,8 @@ class TreeBuilder:
 
     @staticmethod
     def file_line_iter(path):
+        """Iterates over the lines of path, returning a 2-tuple of
+        line-number, line-text."""
         with open(path, 'r') as f:
             i = 0
             while line := f.readline():
@@ -116,6 +119,10 @@ class TreeBuilder:
                 i += 1
 
     def tokenize_next_line(self):
+        """Consumes the next line of the file and returns a tokenized form, if present.
+        None otherwise.
+        
+        Tokenized form is: [path: str, word: str, count: int]"""
         line_tuple = next(self.file_line_iter, None)
         if line_tuple is None:
             return None
@@ -129,6 +136,12 @@ class TreeBuilder:
     
     @staticmethod
     def tokenize_line(line_number, line):
+        """Splits the line according to the format of the output/paths file:
+        
+        path-bitstring word word-count
+        
+        Expected format: three strings of characters separated by two characters.
+        The word count must be an int literal."""
         segments = line.split()
         
         if len(segments) != 3:
@@ -138,6 +151,8 @@ class TreeBuilder:
         return path, word, int(count)
 
     def parse_next_line(self):
+        """Consumes and parses the next unread line of the file. Returns True
+        if there are still lines in the file, False otherwise."""
         tokens = self.tokenize_next_line()
         if tokens is None:
             return False
@@ -148,6 +163,7 @@ class TreeBuilder:
         return True
     
     def build_tree(self):
+        """Parses all of the ines at the provided path, then computes the weights of each node"""
         while self.parse_next_line():
             pass
 
@@ -170,25 +186,28 @@ class TreeBuilder:
         # 
         # This can be computed as the sum of lengths of each label
         # minus twice the size of the shared prefix.
-        #
-        # Note that if and only if the labels are the same, the dist is 0.
-        # (if the lengths are different, zip will stop before dist is 0)
-        # (if the contents are different, for will break before dist is 0)
-        dist = len(label0) + len(label1)
-        return dist - 2 * TreeBuilder.lca_depth(label0, label1)
+        return len(label0) + len(label1) - 2 * TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def min_dist_to_lca(label0: str, label1: str):
+        """Returns the minimum distance to the lowest common ancestor of label0 and label1"""
         min_label_length = min(len(label0), len(label1))
         return min_label_length - TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def max_dist_to_lca(label0: str, label1: str):
+        """Returns the maximum distance to the lowest common ancestor of label0 and label1"""
         max_label_length = max(len(label0), len(label1))
         return max_label_length - TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def lca_depth(label0: str, label1: str):
+        """Returns the level that the lowest common ancestor of label0 and label1 are on.
+        
+        lca_depth('110111', '1101000') -> 4 (lca is '1101')
+
+        lca_depth('1101', '0110') -> 0 (lca is root node)
+        """
         for i, (l0, l1) in enumerate(zip(label0, label1)):
             if l0 != l1:
                 return i + 1
@@ -196,6 +215,8 @@ class TreeBuilder:
     
     @staticmethod
     def lca_label(label0: str, label1: str):
+        """Returns the label of the lowest common ancestor of label0 and label1
+        (biggest common prefix of the labels)."""
         return label0[:TreeBuilder.lca_depth(label0, label1)]
 
 
