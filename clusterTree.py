@@ -175,14 +175,7 @@ class TreeBuilder:
         # (if the lengths are different, zip will stop before dist is 0)
         # (if the contents are different, for will break before dist is 0)
         dist = len(label0) + len(label1)
-        
-        for l0, l1 in zip(label0, label1):
-            if l0 == l1:
-                dist -= 2
-            else:
-                break
-        
-        return dist
+        return dist - 2 * TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def min_dist_to_lca(label0: str, label1: str):
