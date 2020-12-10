@@ -13,9 +13,12 @@ class TreeNode:
         self.value = 0
 
     def get_child(self, right: bool):
+        """ Get right child if right is true, or left child otherwise """
         return self.right_child if right else self.left_child
 
     def force_child(self, right: bool):
+        """ Get a child, or create it if it doesn't exist yet. Gets right child
+            if right is true, left child otherwise """
         if right:
             if not self.right_child:
                 self.right_child = TreeNode(self.label + '1')
@@ -25,6 +28,7 @@ class TreeNode:
         return self.get_child(right)
 
     def __getitem__(self, right):
+        """ Overloads the tree[___] syntax"""
         if isinstance(right, bool):
             return self.force_child(right)
         if isinstance(right, int):
@@ -44,7 +48,7 @@ class TreeNode:
             raise ValueError('walk_string must be a binary string of 0s and 1s, not ' + first)
 
         return self.force_child(right).walk_str(rest)
-    
+
     def add_word(self, word, count):
         self.words.append((word, count))
 
@@ -66,7 +70,7 @@ class TreeNode:
         if self.left_child or self.right_child:
             s += f' [l: {self.left_child}, r: {self.right_child}]'
         return s
-    
+
     __repr__ = __str__
 
     @staticmethod
@@ -120,17 +124,17 @@ class TreeBuilder:
         if line_tuple is None:
             return None
         line_no, line = line_tuple
-        
+
         # if empty line, then skip it.
         if not line:
             return self.tokenize_next_line()
-        
+
         return TreeBuilder.tokenize_line(line_no, line)
-    
+
     @staticmethod
     def tokenize_line(line_number, line):
         segments = line.split()
-        
+
         if len(segments) != 3:
             raise AttributeError(f'Unexpected formatting at: \n line {line_number} | {line}Expected three words.')
 
@@ -141,12 +145,12 @@ class TreeBuilder:
         tokens = self.tokenize_next_line()
         if tokens is None:
             return False
-        
+
         path, word, count = tokens
         self.leaf_paths.add(path)
         self.tree[path].add_word(word, count)
         return True
-    
+
     def build_tree(self):
         while self.parse_next_line():
             pass
@@ -164,10 +168,10 @@ class TreeBuilder:
         #        label1: 110110
         # common prefix: 1101 (lowest common ancestor)
         # They share the prefix 1101 which is the path of
-        # the lowest common ancestor. Therefore the distance 
+        # the lowest common ancestor. Therefore the distance
         # between them is the sum of the lengths of the unique
         # suffixes '0101' and '10', ie 6 nodes apart.
-        # 
+        #
         # This can be computed as the sum of lengths of each label
         # minus twice the size of the shared prefix.
         #
@@ -193,7 +197,7 @@ class TreeBuilder:
             if l0 != l1:
                 return i + 1
         return min(len(label0), len(label1))
-    
+
     @staticmethod
     def lca_label(label0: str, label1: str):
         return label0[:TreeBuilder.lca_depth(label0, label1)]
