@@ -64,6 +64,8 @@ class Flag:
         """Gets the command line args, minus the name of the file executing"""
         return argv[1:]
 
+    
+
 
 class LiteralFlag(Flag):
     def __init__(self, shortForm, longForm=None, description=''):
