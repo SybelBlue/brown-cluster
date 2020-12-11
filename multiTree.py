@@ -129,9 +129,9 @@ if __name__ == "__main__":
     with open('./test-output.csv', 'w+') as f:
         for word0, word1, weight in multi_builder.pairwise_score():
             f.write(word0)
-            f.write('\t')
+            f.write(',')
             f.write(word1)
-            f.write('\t')
+            f.write(',')
             f.write(str(weight))
             f.write('\n')
     
