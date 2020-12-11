@@ -28,7 +28,7 @@ class TreeNode:
         return self.get_child(right)
 
     def __getitem__(self, right):
-        """ Overloads the tree[___] syntax. 
+        """ Overloads the tree[___] syntax.
             right must be a bool, 0, 1 or a bitstring."""
         if isinstance(right, bool):
             return self.force_child(right)
@@ -39,14 +39,14 @@ class TreeNode:
         raise ValueError('must be indexed by bool, int, or str')
 
     def walk_with_bitstring(self, path: str):
-        """Takes a bitstring path, and forces a walk along that string, 
-        creating nodes as necessary to complete the walk. Returns the node that the 
+        """Takes a bitstring path, and forces a walk along that string,
+        creating nodes as necessary to complete the walk. Returns the node that the
         path terminates at. Equivalent to:
-        
+
         >>> current = tree_root
         >>> for c in path:
         >>>     right = TreeNode.str_to_right(c)
-        >>>     current = current[right] 
+        >>>     current = current[right]
         >>> return current"""
         if not path:
             return self
@@ -61,7 +61,7 @@ class TreeNode:
         self.words.append((word, count))
 
     def compute_weight(self):
-        """Counts how many leaf nodes have this as an ancestor, and saves that
+        """ Counts how many leaf nodes have this as an ancestor, and saves that
         as self.value. (Runs recursively, so all descendants will also have self.value set.)"""
         value = sum(c for _, c in self.words)
         if self.right_child:
@@ -72,13 +72,13 @@ class TreeNode:
         return value
 
     def __str__(self):
-        s = f'TreeNode "{self.label}"'
+        s = "TreeNode " + self.label
         if self.value:
-            s += f' ({self.value})'
+            s += " self.value"
         if self.words:
-            s += f' {self.words}'
+            s += " self.words"
         if self.left_child or self.right_child:
-            s += f' [l: {self.left_child}, r: {self.right_child}]'
+            s += " [l: " + self.left_child + ", r: " + self.right_child + "]"
         return s
 
     # sets the console representation to be identical to str(self)
@@ -95,14 +95,14 @@ class TreeNode:
 
     def pretty_format(self, digitsLen=None, joinLines=True):
         """ Recursively computes the pretty formatting for this node and all descendants.
-            
+
         digitsLen is the number digits to show in the value slot.
-        
+
         When joinLines is true, this returns a string, otherwise it returns a list of lines."""
         if digitsLen is None:
             digitsLen = len(str(self.value))
         padding = (digitsLen - len(str(self.value))) * ' '
-        lines = [f'Node {self.label} {padding}{self.value} --']
+        lines = ["Node " + self.label + padding + self.value + "--"]
 
         if not self.left_child and not self.right_child:
             return '\n'.join(lines) if joinLines else lines
@@ -142,7 +142,7 @@ class TreeBuilder:
     def tokenize_next_line(self):
         """Consumes the next line of the file and returns a tokenized form, if present.
         None otherwise.
-        
+
         Tokenized form is: [path: str, word: str, count: int]"""
         line_tuple = next(self.file_line_iter, None)
         if line_tuple is None:
@@ -158,9 +158,9 @@ class TreeBuilder:
     @staticmethod
     def tokenize_line(line_number, line):
         """Splits the line according to the format of the output/paths file:
-        
+
         path-bitstring word word-count
-        
+
         Expected format: three strings of characters separated by two characters.
         The word count must be an int literal."""
         segments = line.split()
@@ -184,7 +184,7 @@ class TreeBuilder:
         return True
 
     def build_tree(self):
-        """Parses all of the ines at the provided path, then computes the weights of each node"""
+        """Parses all of the lines at the provided path, then computes the weights of each node"""
         while self.parse_next_line():
             pass
 
@@ -195,36 +195,42 @@ class TreeBuilder:
 
     @staticmethod
     def distance(label0: str, label1: str):
-        """Returns the number of nodes required to travel from node0 to node1"""
-        # Consider the following example lables
-        #        label0: 11010101
-        #        label1: 110110
-        # common prefix: 1101 (lowest common ancestor)
-        # They share the prefix 1101 which is the path of
-        # the lowest common ancestor. Therefore the distance
-        # between them is the sum of the lengths of the unique
-        # suffixes '0101' and '10', ie 6 nodes apart.
-        #
-        # This can be computed as the sum of lengths of each label
-        # minus twice the size of the shared prefix.
+        """ Returns the smallest number of nodes required to travel from node0 to node1
+            -----
+
+            Consider the following example lables
+
+                   label0: 11010101
+                   label1: 110110
+
+            common prefix: 1101 (lowest common ancestor)
+            They share the prefix 1101 which is the path of
+            the lowest common ancestor. Therefore the distance
+            between them is the sum of the lengths of the unique
+            suffixes '0101' and '10', ie 6 nodes apart.
+
+            This can be computed as the sum of lengths of each label
+            minus twice the size of the shared prefix. """
         return len(label0) + len(label1) - 2 * TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def min_dist_to_lca(label0: str, label1: str):
-        """Returns the minimum distance to the lowest common ancestor of label0 and label1"""
+        """ Out of the two distances: label0 to lca, and label1 to lca, returns
+            the minimum of those two values """
         min_label_length = min(len(label0), len(label1))
         return min_label_length - TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def max_dist_to_lca(label0: str, label1: str):
-        """Returns the maximum distance to the lowest common ancestor of label0 and label1"""
+        """ Out of the two distances: label0 to lca, and label1 to lca, returns
+            the maximum of those two values """
         max_label_length = max(len(label0), len(label1))
         return max_label_length - TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
     def lca_depth(label0: str, label1: str):
         """Returns the level that the lowest common ancestor of label0 and label1 are on.
-        
+
         lca_depth('110111', '1101000') -> 4 (lca is '1101')
 
         lca_depth('1101', '0110') -> 0 (lca is root node)
@@ -236,8 +242,8 @@ class TreeBuilder:
 
     @staticmethod
     def lca_label(label0: str, label1: str):
-        """Returns the label of the lowest common ancestor of label0 and label1
-        (biggest common prefix of the labels)."""
+        """Returns the label (eg, '110111') of the lowest common ancestor of
+        label0 and label1 (biggest common prefix of the labels)."""
         return label0[:TreeBuilder.lca_depth(label0, label1)]
 
 

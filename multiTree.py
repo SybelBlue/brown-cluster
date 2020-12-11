@@ -8,8 +8,9 @@ from flag import *
 class MultiTreeBuilder:
     def __init__(self, paths):
         """paths are the relative file locations that self should build path_trees from."""
-        self.word_paths = defaultdict(list)
-        self.paths = paths
+        self.word_paths = defaultdict(list) # stores the bitstring paths for each word
+        self.paths = paths # file locations of the paths files
+        # TreeBuilder's buildTree method takes in a file location and creates a tree.
         self.tree_builders = { path: self.make_new_tree(path) for path in paths }
         self.trees = list()
 
@@ -18,22 +19,22 @@ class MultiTreeBuilder:
         return TreeBuilder(path, self.multi_file_line_iter(path))
 
     def multi_file_line_iter(self, path):
-        """Creates a line_iter usable for a TreeBuilder (takes a path and returns an iter that 
+        """Creates a line_iter usable for a TreeBuilder (takes a path and returns an iter that
         generates (line-number, line-text)), but also saves each path for each word that
         this generator yields."""
         for i, line in TreeBuilder.file_line_iter(path):
             path, word, _ = TreeBuilder.tokenize_line(i, line)
             self.word_paths[word].append(path)
             yield i, line
-    
+
     def build_all(self):
         """Calls build_tree on each builder in self.tree_builder, then stores a list of results
         in self.trees"""
         self.trees = [builder.build_tree() for builder in self.tree_builders.values()]
-    
+
     def get_tree(self, path: str):
         return self.tree_builders[path].tree
-        
+
 
 if __name__ == "__main__":
     cluster_flag = LiteralFlag('c', 'clusters', 'List of cluster sizes to compare')
