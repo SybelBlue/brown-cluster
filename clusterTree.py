@@ -193,6 +193,9 @@ class TreeBuilder:
 
         return self.tree
 
+    def max_depth(self):
+        return max(map(len, self.leaf_paths))
+
     @staticmethod
     def distance(label0: str, label1: str):
         """ Returns the smallest number of nodes required to travel from node0 to node1
