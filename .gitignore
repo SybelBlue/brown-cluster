@@ -7,3 +7,4 @@ clusters/
 wcluster
 .idea/
 __pycache__/
+*.csv
