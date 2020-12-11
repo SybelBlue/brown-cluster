@@ -5,22 +5,32 @@ from flag import *
 
 class MultiTreeBuilder:
     def __init__(self, *paths):
+        """paths are the relative file locations that self should build path_trees from."""
         self.word_paths = defaultdict(list)
         self.paths = paths
-        self.path_trees = { path: self.make_new_tree(path) for path in paths }
+        self.tree_builders = { path: self.make_new_tree(path) for path in paths }
+        self.trees = list()
 
     def make_new_tree(self, path):
+        """Returns a new tree builder that uses this line_iter"""
         return TreeBuilder(path, self.multi_file_line_iter)
 
     def multi_file_line_iter(self, path):
+        """Creates a line_iter usable for a TreeBuilder (takes a path and returns an iter that 
+        generates (line-number, line-text)), but also saves each path for each word that
+        this generator yields."""
         for i, line in TreeBuilder.file_line_iter(path):
             path, word, _ = TreeBuilder.tokenize_line(line)
             self.word_paths[word].append(path)
             yield i, line
     
     def build_all(self):
-        for tree in self.path_trees.values():
-            tree.build_tree()
+        """Calls build_tree on each builder in self.tree_builder, then stores a list of results
+        in self.trees"""
+        self.trees = [builder.build_tree() for builder in self.tree_builders.values()]
+    
+    def get_tree(self, path: str):
+        return self.tree_builders[path].tree
         
 
 if __name__ == "__main__":

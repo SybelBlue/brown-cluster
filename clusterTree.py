@@ -28,32 +28,41 @@ class TreeNode:
         return self.get_child(right)
 
     def __getitem__(self, right):
-        """ Overloads the tree[___] syntax"""
+        """ Overloads the tree[___] syntax.
+            right must be a bool, 0, 1 or a bitstring."""
         if isinstance(right, bool):
             return self.force_child(right)
         if isinstance(right, int):
             return self.force_child(right != 0)
         if isinstance(right, str):
-            return self.walk_str(right)
+            return self.walk_with_bitstring(right)
         raise ValueError('must be indexed by bool, int, or str')
 
-    def walk_str(self, walk_string: str):
-        if not walk_string:
+    def walk_with_bitstring(self, path: str):
+        """Takes a bitstring path, and forces a walk along that string,
+        creating nodes as necessary to complete the walk. Returns the node that the
+        path terminates at. Equivalent to:
+
+        >>> current = tree_root
+        >>> for c in path:
+        >>>     right = TreeNode.str_to_right(c)
+        >>>     current = current[right]
+        >>> return current"""
+        if not path:
             return self
 
-        first, rest = walk_string[0], walk_string[1:]
+        first, rest = path[0], path[1:]
         right = TreeNode.str_to_right(first)
-
-        if right is None:
-            raise ValueError('walk_string must be a binary string of 0s and 1s, not ' + first)
 
         return self.force_child(right).walk_str(rest)
 
     def add_word(self, word, count):
+        """Adds (word, count) to self.words"""
         self.words.append((word, count))
 
     def compute_weight(self):
-        """ Compute the total number of words in all leaf descendants """
+        """ Counts how many leaf nodes have this as an ancestor, and saves that
+        as self.value. (Runs recursively, so all descendants will also have self.value set.)"""
         value = sum(c for _, c in self.words)
         if self.right_child:
             value += self.right_child.compute_weight()
@@ -72,17 +81,24 @@ class TreeNode:
             s += " [l: " + self.left_child + ", r: " + self.right_child + "]"
         return s
 
+    # sets the console representation to be identical to str(self)
     __repr__ = __str__
 
     @staticmethod
     def str_to_right(s):
+        """Returns False if s == '0', True if s == '1', otherwise raises an error."""
         if s == '0':
             return False
         if s == '1':
             return True
-        return None
+        raise ValueError('s must be a 0 or 1 (bitstring char)')
 
     def pretty_format(self, digitsLen=None, joinLines=True):
+        """ Recursively computes the pretty formatting for this node and all descendants.
+
+        digitsLen is the number digits to show in the value slot.
+
+        When joinLines is true, this returns a string, otherwise it returns a list of lines."""
         if digitsLen is None:
             digitsLen = len(str(self.value))
         padding = (digitsLen - len(str(self.value))) * ' '
