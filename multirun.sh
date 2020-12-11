@@ -4,7 +4,7 @@
 list=''
 for cluster in "$@"
 do
-    ./wcluster --text input.txt --c $cluster
-    list="${list} ${cluster}"
+    ./wcluster --text cleaned-lolcat.txt --c $cluster
+    list="${list},${cluster}"
 done
-#python3 cleanInput.py "$list"
+python3 multiTree.py --clusters "[${list:1}]" cleaned-lolcat

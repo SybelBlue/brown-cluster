@@ -122,10 +122,6 @@ if __name__ == "__main__":
     multi_builder.build_all()
 
     # do algorithm now
-
-    # test code
-    print('hai paths:', multi_builder.word_paths['hai'])
-
     with open('./test-output.csv', 'w+') as f:
         for word0, word1, weight in multi_builder.pairwise_score():
             f.write(word0)
