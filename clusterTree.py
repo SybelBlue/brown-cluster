@@ -54,7 +54,7 @@ class TreeNode:
         first, rest = path[0], path[1:]
         right = TreeNode.str_to_right(first)
 
-        return self.force_child(right).walk_str(rest)
+        return self.force_child(right).walk_with_bitstring(rest)
 
     def add_word(self, word, count):
         """Adds (word, count) to self.words"""
