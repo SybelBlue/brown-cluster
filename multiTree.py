@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from collections import defaultdict
 from os.path import exists
-from itertools import combinations, islice
+from sys import exit
+from itertools import combinations
 from csv import writer
 
 from clusterTree import TreeBuilder
@@ -46,9 +47,6 @@ class MultiTreeBuilder:
     def get_tree(self, path: str):
         return self.tree_builders[path].tree
 
-    def analyse(self):
-        pass
-
     def pairwise_score(self):
         # Edge weight calculation:
         # For every set of words/nodes A and B:
@@ -76,6 +74,8 @@ class MultiTreeBuilder:
                 value = ((max_path + 1) / (ab_path + 1)) * self.cluster_sizes[i]
                 tree_bitstring_pair_values[key] = value
 
+        print('built memoized bistring dict!')
+
         for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
             edge_weight = 0
             for i in range(len(self.trees)):
@@ -88,32 +88,33 @@ class MultiTreeBuilder:
                     edge_weight += max_path * self.cluster_sizes[i]
             yield a, b, edge_weight
 
-    def pairwise_score_iterable(self):
-        max_tree_depths = [builder.max_depth() for builder in self.tree_builders.values()]
-
-        for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
-            edge_weight = 0
-            for i, depth in enumerate(max_tree_depths):
-                ab_path = TreeBuilder.distance(a_bitstrs[i], b_bitstrs[i])
-                max_path = 2 * depth
-                edge_weight += ((max_path + 1) / (ab_path + 1)) * self.cluster_sizes[i]
-
-                # So here's the thing
-                # they're really closer together when they have smaller edge weights
-                # duh, im just an idiot
-                edge_weight = ab_path * self.cluster_sizes[i]
-            yield (a, b), edge_weight
-
 
 if __name__ == "__main__":
     cluster_flag = LiteralFlag('c', 'clusters', 'List of cluster sizes to compare')
+    delimiter_flag = LiteralFlag('d', 'delimiter', 'The delimiter string to use\nfor the output file', default_value='\t')
+    help_flag = Flag('h', 'help', 'Shows this prompt')
+
+    def print_help():
+        print('--- Help ---------------------------------------------')
+        print('\tThis tool must be provided with cluster sizes \n\tand the name of the file that was used as\n\tinput to the algorithm (without its extension)')
+        print(cluster_flag.format_description(4, 18))
+        print(delimiter_flag.format_description(4, 18))
+        print(help_flag.format_description(4, 18))
+        print('------------------------------------------------------')
 
     args = Flag.get_terminal_args()
-    if not args:
+
+    if help_flag.remove_from_args(args):
+        print_help()
+        exit()
+    
+    if not cluster_flag.remove_from_args(args):
+        print_help()
         raise ValueError('MultiTree requires a list of cluster sizes (w/o spaces)')
 
-    cluster_flag.remove_from_args(args)
-
+    if not delimiter_flag.remove_from_args(args):
+        print(f'Using default delimter: {delimiter_flag.value}')
+    
     if not args:
         raise ValueError('MultiTree requires the name of the input file (without extension)')
 
@@ -122,6 +123,7 @@ if __name__ == "__main__":
     del args[0]
 
     if args:
+        print_help()
         raise ValueError('Unkown args: ', *args)
 
     # now the args are parsed
@@ -133,7 +135,8 @@ if __name__ == "__main__":
 
     # do algorithm now
     with open('./test-output.csv', 'w+') as f:
-        csv_writer = writer(f)
+        csv_writer = writer(f, delimiter=delimiter_flag.value)
+        csv_writer.writerow('source target weight'.split())
         for result in multi_builder.pairwise_score():
             csv_writer.writerow(result)
 
