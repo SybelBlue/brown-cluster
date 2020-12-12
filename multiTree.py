@@ -112,6 +112,10 @@ if __name__ == "__main__":
         raise ValueError('MultiTree requires a list of cluster sizes (w/o spaces)')
 
     cluster_flag.remove_from_args(args)
+
+    if not args:
+        raise ValueError('MultiTree requires the name of the input file (without extension)')
+    
     input_name = args[0]
 
     del args[0]
