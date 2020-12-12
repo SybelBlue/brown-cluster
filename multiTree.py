@@ -85,8 +85,8 @@ class MultiTreeBuilder:
                     edge_weight += tree_bitstring_pair_values[key]
                 else:
                     max_path = 2 * max_tree_depths[i]
-                    edge_weight += max_path * self.cluster_sizes[i]
-            yield a, b, edge_weight
+                    edge_weight += max_path #* self.cluster_sizes[i] # it's already scaled because the max distance will be greater for things that are further apart
+            yield a, b, int(edge_weight)
 
 
 if __name__ == "__main__":
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     if help_flag.remove_from_args(args):
         print_help()
         exit()
-    
+
     if not cluster_flag.remove_from_args(args):
         print_help()
         raise ValueError('MultiTree requires a list of cluster sizes (w/o spaces)')
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     if not isinstance(delimiter_flag.value, str):
         print_help()
         raise ValueError('MultiTree delimiter flag must be followed by a python str literal')
-    
+
     if not args:
         raise ValueError('MultiTree requires the name of the input file (without extension)')
 
@@ -144,6 +144,8 @@ if __name__ == "__main__":
         csv_writer = writer(f, delimiter=delimiter_flag.value)
         csv_writer.writerow('source target weight'.split())
         for result in multi_builder.pairwise_score():
-            csv_writer.writerow(result)
+            # this should get rid of some of the incredibly distant locations
+            if result[2] < 400:
+                csv_writer.writerow(result)
 
     print('done')
