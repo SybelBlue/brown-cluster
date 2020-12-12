@@ -66,9 +66,9 @@ class Flag:
 
 
 class LiteralFlag(Flag):
-    def __init__(self, shortForm, longForm=None, description=''):
+    def __init__(self, shortForm, longForm=None, description='', default_value=None):
         Flag.__init__(self, shortForm, longForm, description)
-        self.value = None
+        self.value = default_value
 
     def __str__(self):
         return f'LiteralFlag({self.shortForm}, {self.longForm}: {self.value})'
