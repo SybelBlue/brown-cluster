@@ -2,6 +2,7 @@
 from collections import defaultdict
 from os.path import exists
 from itertools import combinations, islice
+from csv import writer
 
 from clusterTree import TreeBuilder
 from flag import *
@@ -115,7 +116,7 @@ if __name__ == "__main__":
 
     if not args:
         raise ValueError('MultiTree requires the name of the input file (without extension)')
-    
+
     input_name = args[0]
 
     del args[0]
@@ -132,12 +133,8 @@ if __name__ == "__main__":
 
     # do algorithm now
     with open('./test-output.csv', 'w+') as f:
-        for word0, word1, weight in multi_builder.pairwise_score():
-            f.write(word0)
-            f.write(',')
-            f.write(word1)
-            f.write(',')
-            f.write(str(weight))
-            f.write('\n')
+        csv_writer = writer(f)
+        for result in multi_builder.pairwise_score():
+            csv_writer.writerow(result)
 
     print('done')
