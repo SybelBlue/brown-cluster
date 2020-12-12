@@ -111,9 +111,15 @@ if __name__ == "__main__":
     if not cluster_flag.remove_from_args(args):
         print_help()
         raise ValueError('MultiTree requires a list of cluster sizes (w/o spaces)')
+    if not isinstance(cluster_flag.value, list):
+        print_help()
+        raise ValueError('MultiTree cluster flag must be followed by a python list literal')
 
     if not delimiter_flag.remove_from_args(args):
         print('Using default delimter: "' + delimiter_flag.value + '"')
+    if not isinstance(delimiter_flag.value, str):
+        print_help()
+        raise ValueError('MultiTree delimiter flag must be followed by a python str literal')
     
     if not args:
         raise ValueError('MultiTree requires the name of the input file (without extension)')
