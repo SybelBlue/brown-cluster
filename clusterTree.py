@@ -133,7 +133,7 @@ class TreeBuilder:
     def file_line_iter(path):
         """Iterates over the lines of path, returning a 2-tuple of
         line-number, line-text."""
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="utf8") as f:
             i = 0
             while line := f.readline():
                 yield i, line

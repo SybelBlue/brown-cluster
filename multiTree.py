@@ -86,7 +86,7 @@ class MultiTreeBuilder:
                 else:
                     max_path = 2 * max_tree_depths[i]
                     edge_weight += max_path #* self.cluster_sizes[i] # it's already scaled because the max distance will be greater for things that are further apart
-            yield a, b, int(float(edge_weight)))
+            yield a, b, int(float(edge_weight))
 
 
 if __name__ == "__main__":
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     multi_builder.build_all()
 
     # do algorithm now
-    with open('./test-output.csv', 'w+') as f:
+    with open('C:\\Users\\J\\Downloads\\aaaaaaaaaaaaa.csv', 'w+') as f:
         csv_writer = writer(f, delimiter=delimiter_flag.value)
         csv_writer.writerow('source target weight'.split())
         for result in multi_builder.pairwise_score():
