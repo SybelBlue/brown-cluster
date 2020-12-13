@@ -69,9 +69,9 @@ class MultiTreeBuilder:
         for i, builder in enumerate(self.tree_builders.values()):
             for a_bitstr, b_bitstr in combinations(builder.leaf_paths, 2):
                 ab_path = TreeBuilder.distance(a_bitstr, b_bitstr)
-                max_path = 2 * max_tree_depths[i]
+                # max_path = 2 * max_tree_depths[i]
                 key = make_bitstring_key(i, a_bitstr, b_bitstr)
-                value = ((max_path + 1) / (ab_path + 1)) * self.cluster_sizes[i]
+                value = ab_path#((max_path + 1) / (ab_path + 1)) #* self.cluster_sizes[i]
                 tree_bitstring_pair_values[key] = value
 
         print('built memoized bistring dict!')
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         csv_writer.writerow('source target weight'.split())
         for result in multi_builder.pairwise_score():
             # this should get rid of some of the incredibly distant locations
-            if result[2] < 400:
-                csv_writer.writerow(result)
+            # if result[2] < 400:
+            csv_writer.writerow(result)
 
     print('done')
