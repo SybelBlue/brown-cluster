@@ -4,22 +4,30 @@ from os.path import exists
 from sys import exit
 from itertools import combinations
 from csv import writer
+from math import ceil
 
 from clusterTree import TreeBuilder
 from terminalHelpers import *
 
 class MultiTreeBuilder:
-    def __init__(self, input_file_name: str, cluster_sizes: list):
+    @staticmethod
+    def create_file_locs(input_file_name, cluster_sizes):
         """ input_file_name is the name of the file (without the extension) that contains the corpus given to Brown's algorithm
-            cluster_sizes is the list of -c arguments provided to each execution of the algorithm"""
-        self.cluster_sizes = cluster_sizes
+            cluster_sizes is the list of -c arguments provided to each execution of the algorithm
+        """
+        file_names = [f"{input_file_name}-c{size}-p1.out/paths" for size in cluster_sizes]
 
-        # file locations of the paths files
-        self.file_names = [f"{input_file_name}-c{size}-p1.out/paths" for size in cluster_sizes]
-        for f_name in self.file_names:
+        for f_name in file_names:
             if not exists(f_name):
                 raise ValueError(f'File at {f_name} could not be found')
+        
+        return file_names
 
+    def __init__(self, file_names: list):
+        """ input_file_name is the name of the file (without the extension) that contains the corpus given to Brown's algorithm
+            cluster_sizes is the list of -c arguments provided to each execution of the algorithm"""
+        # file locations of the paths files
+        self.file_names = file_names
         # TreeBuilder's buildTree method takes in a file location and creates a tree.
         self.tree_builders = { path: self.make_new_tree(path) for path in self.file_names }
 
@@ -81,15 +89,13 @@ class MultiTreeBuilder:
         for i, builder in enumerate(self.tree_builders.values()):
             for a_bitstr, b_bitstr in combinations(builder.leaf_paths, 2):
                 ab_path = TreeBuilder.distance(a_bitstr, b_bitstr)
-                # max_path = 2 * max_tree_depths[i]
                 key = make_bitstring_key(i, a_bitstr, b_bitstr)
-                value = ab_path#((max_path + 1) / (ab_path + 1)) #* self.cluster_sizes[i]
-                tree_bitstring_pair_values[key] = value
+                tree_bitstring_pair_values[key] = (ab_path + 1) / max_tree_depths[i]
 
         print(f'built memoized bistring dict! (size: {len(tree_bitstring_pair_values)})')
 
         for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
-            edge_weight = 0
+            edge_weight = 0.1
             for i in range(len(self.trees)):
                 a_str, b_str = a_bitstrs[i], b_bitstrs[i]
                 if a_str != b_str:
@@ -97,8 +103,8 @@ class MultiTreeBuilder:
                     edge_weight += tree_bitstring_pair_values[key]
                 else:
                     max_path = 2 * max_tree_depths[i]
-                    edge_weight += max_path #* self.cluster_sizes[i] # it's already scaled because the max distance will be greater for things that are further apart
-            yield a, b, int(float(edge_weight))
+                    edge_weight += max_path
+            yield a, b, ceil(edge_weight)
 
 
 if __name__ == "__main__":
@@ -156,7 +162,8 @@ if __name__ == "__main__":
     # cluster_flag should have a list of cluster sizes as cluster_flag.value
     # input_name should be a string with the name of the input file for the original brown's algorithm
 
-    multi_builder = MultiTreeBuilder(input_name, cluster_flag.value)
+    files = MultiTreeBuilder.create_file_locs(input_name, cluster_flag.value)
+    multi_builder = MultiTreeBuilder(files)
     multi_builder.build_all()
 
     # do algorithm now

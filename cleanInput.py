@@ -144,7 +144,7 @@ punctuation_sub_regex = r' \g<1> '
 def clean_line(line):
     """Spaces out each bunch of symbols, and terminates with a single newline."""
     cleaned = sub(punctuation_cleaning_regex, punctuation_sub_regex, line).strip()
-    return cleaned.replace(r'"', r'\"') + '\n'
+    return cleaned.replace(r'"', r"'") + '\n'
 
 def clean_corpus(file_lines: iter, target_path):
     """Cleans each line in file_lines, and writes to the target_path. Creates
