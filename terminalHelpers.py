@@ -95,7 +95,7 @@ class LiteralFlag(Flag):
             self.value = literal_eval(args[i])
             del args[i]
         except:
-            raise ValueError(f'Parsing of literal "{args[i]}" failed')
+            raise ValueError(f'Parsing of literal "{args[i]}" failed for flag {self.proper_long_flag}')
         
         return True
 

@@ -2,7 +2,7 @@ from os.path import abspath, exists, split, join
 from sys import exit, stderr
 from re import compile, sub
 
-from flag import Flag
+from terminalHelpers import Flag
 
 class CleanerPrinter:
     """A class for grouping together the console output behavior of the cleaning program"""

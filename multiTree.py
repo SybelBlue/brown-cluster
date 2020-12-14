@@ -6,7 +6,7 @@ from itertools import combinations
 from csv import writer
 
 from clusterTree import TreeBuilder
-from flag import *
+from terminalHelpers import *
 
 class MultiTreeBuilder:
     def __init__(self, input_file_name: str, cluster_sizes: list):
