@@ -47,7 +47,19 @@ class MultiTreeBuilder:
     def get_tree(self, path: str):
         return self.tree_builders[path].tree
 
+    def analyse(self):
+        """ Yields (percent_completion, pairwise_score_value), or
+            (pct_complete: float, (word0: str, word1: str, score: float))"""
+        # this is the of number of yielded values for pairwise_score
+        # == len(combinations(self.word_paths, 2))
+        value_count = len(self.word_paths)
+        value_count *= value_count - 1
+        value_count /= 2
+        for i, result in enumerate(self.pairwise_score()):
+            yield i / value_count * 100, result
+
     def pairwise_score(self):
+        """Yields 3-tuples containing unique pairs of words and their pairwise relation"""
         # Edge weight calculation:
         # For every set of words/nodes A and B:
         #     edgeWeight = 0
@@ -74,7 +86,7 @@ class MultiTreeBuilder:
                 value = ((max_path + 1) / (ab_path + 1)) * self.cluster_sizes[i]
                 tree_bitstring_pair_values[key] = value
 
-        print('built memoized bistring dict!')
+        print(f'built memoized bistring dict! (size: {len(tree_bitstring_pair_values)})')
 
         for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
             edge_weight = 0
@@ -93,13 +105,13 @@ if __name__ == "__main__":
     cluster_flag = LiteralFlag('c', 'clusters', 'List of cluster sizes to compare')
     delimiter_flag = LiteralFlag('d', 'delimiter', 'The delimiter string to use\nfor the output file', default_value='\t')
     help_flag = Flag('h', 'help', 'Shows this prompt')
+    output_flag = LiteralFlag('o', 'output', 'Where to write csv output', default_value='./multi-tree-output.csv')
 
     def print_help():
         print('--- Help ---------------------------------------------')
         print('\tThis tool must be provided with cluster sizes \n\tand the name of the file that was used as\n\tinput to the algorithm (without its extension)')
-        print(cluster_flag.format_description(4, 18))
-        print(delimiter_flag.format_description(4, 18))
-        print(help_flag.format_description(4, 18))
+        for flag in [cluster_flag, delimiter_flag, help_flag, output_flag]:
+            print(flag.format_description(4, 18))
         print('------------------------------------------------------')
 
     args = Flag.get_terminal_args()
@@ -121,6 +133,14 @@ if __name__ == "__main__":
         print_help()
         raise ValueError('MultiTree delimiter flag must be followed by a python str literal')
 
+    if not output_flag.remove_from_args(args):
+        print(f'Using default output location: {output_flag.value}')
+    if not isinstance(output_flag.value, str):
+        print_help()
+        raise ValueError('MultiTree output flag must be a str-literal location of an output file')
+    if not exists(output_flag.value):
+        print(f'Creating new file for output: {output_flag.value}')
+
     if not args:
         raise ValueError('MultiTree requires the name of the input file (without extension)')
 
@@ -140,12 +160,17 @@ if __name__ == "__main__":
     multi_builder.build_all()
 
     # do algorithm now
-    with open('./test-output.csv', 'w+') as f:
+    with open(output_flag.value, 'w+') as f:
         csv_writer = writer(f, delimiter=delimiter_flag.value)
         csv_writer.writerow('source target weight'.split())
-        for result in multi_builder.pairwise_score():
+        meter = ProgressMeter()
+        written = 0
+        for pct_completion, result in multi_builder.analyse():
+            meter.update_meter(pct_completion)
             # this should get rid of some of the incredibly distant locations
             if result[2] < 400:
                 csv_writer.writerow(result)
+                written += 1
 
-    print('done')
+    print()
+    print(f'done! wrote {written:,} lines to {output_flag.value}')

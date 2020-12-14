@@ -1,5 +1,6 @@
 from sys import argv
 from ast import literal_eval
+from math import ceil, floor
 
 class Flag:
     """A class that represents a flag that could be entered at the command line"""
@@ -90,11 +91,38 @@ class LiteralFlag(Flag):
         if i == len(args):
             return True
         
-        self.value = literal_eval(args[i])
-        del args[i]
+        try:
+            self.value = literal_eval(args[i])
+            del args[i]
+        except:
+            raise ValueError(f'Parsing of literal "{args[i]}" failed')
         
         return True
 
+
+class ProgressMeter():
+    """A class that creates a maintains a progress bar"""
+    def __init__(self, pct_per_char=5):
+        """pct_per_char is how many percent per '=' in the bar"""
+        self.last = -1
+        self.bar_size = ceil(100 / pct_per_char)
+        self.pct_per_char = pct_per_char
+    
+    def update_meter(self, pct_complete, force=False):
+        """Updates the meter each time a percent passes, or if force is true"""
+        if force or pct_complete - self.last < 1:
+            return
+        pct_complete = min(100, pct_complete)
+        self.last = pct_complete
+        filled = floor(pct_complete / self.pct_per_char)
+        if pct_complete >= 100 - self.pct_per_char / 2:
+            bar = "[" + self.bar_size * "=" + ']'
+        else:
+            spaces = self.bar_size - 1 - filled
+            bar = '[' + filled * '=' + '>' \
+                        + spaces * ' ' + ']'
+        print(f'\rcompletion: {ceil(pct_complete)/100:>4.0%} {bar}', end='')
+        
 
 if __name__ == "__main__":
     f = LiteralFlag('t', 'test', 'description')
