@@ -13,8 +13,7 @@ class MultiTreeBuilder:
     @staticmethod
     def create_file_locs(input_file_name, cluster_sizes):
         """ input_file_name is the name of the file (without the extension) that contains the corpus given to Brown's algorithm
-            cluster_sizes is the list of -c arguments provided to each execution of the algorithm
-        """
+            cluster_sizes is the list of -c arguments provided to each execution of the algorithm"""
         file_names = [f"{input_file_name}-c{size}-p1.out/paths" for size in cluster_sizes]
 
         for f_name in file_names:
@@ -24,8 +23,7 @@ class MultiTreeBuilder:
         return file_names
 
     def __init__(self, file_names: list):
-        """ input_file_name is the name of the file (without the extension) that contains the corpus given to Brown's algorithm
-            cluster_sizes is the list of -c arguments provided to each execution of the algorithm"""
+        """file_names are the tree output path locations ie 'input-c40-p1.out/paths'"""
         # file locations of the paths files
         self.file_names = file_names
         # TreeBuilder's buildTree method takes in a file location and creates a tree.
