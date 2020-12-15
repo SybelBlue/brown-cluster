@@ -159,9 +159,11 @@ if __name__ == "__main__":
     multi_builder = MultiTreeBuilder(files)
     multi_builder.build_all()
 
+    csv_kwargs = {'delimiter': delimiter_flag.value}
+
     # do algorithm now
     with open(output_flag.value, 'w+') as f:
-        csv_writer = writer(f, delimiter=delimiter_flag.value)
+        csv_writer = writer(f, **csv_kwargs)
         csv_writer.writerow('source target weight'.split())
         meter = ProgressMeter()
         written = 0
@@ -178,15 +180,14 @@ if __name__ == "__main__":
     inverted_output = output_flag.value.replace('.csv', "-inverted.csv")
 
     if inverse := prompt_yn("Do you wish to invert the score so low value is high correlation?"):
-        with open(output_flag.value) as raw:
-            with open(inverted_output, 'w+') as new:
-                meter = ProgressMeter()
-                r = reader(raw, delimiter=delimiter_flag.value)
-                w = writer(new, delimiter=delimiter_flag.value)
-                w.writerow(next(r)) # write header
-                for i, (a, b, s) in enumerate(r):
-                    meter.update_meter(100 * i / written)
-                    w.writerow((a, b, max_value - int(s) + 1))
+        with open(output_flag.value) as old_file, open(inverted_output, 'w+') as new_file:
+            meter = ProgressMeter()
+            r = reader(old_file, **csv_kwargs)
+            w = writer(new_file, **csv_kwargs)
+            w.writerow(next(r)) # write header
+            for i, (a, b, s) in enumerate(r):
+                meter.update_meter(100 * i / written)
+                w.writerow((a, b, max_value - int(s) + 1))
         print()
         print(f"done! wrote to {inverted_output}")
     
