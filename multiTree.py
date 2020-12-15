@@ -179,3 +179,22 @@ if __name__ == "__main__":
 
     print()
     print(f'done! wrote {written:,} lines to {output_flag.value} (max {max_value})')
+
+    inverted_output = output_flag.value.replace('.csv', "-inverted.csv")
+
+    if inverse := prompt_yn("Do you wish to invert the score so low value is high correlation?"):
+        with open(output_flag.value) as raw:
+            with open(inverted_output, 'w+') as new:
+                meter = ProgressMeter()
+                r = reader(raw, delimiter=delimiter_flag.value)
+                w = writer(new, delimiter=delimiter_flag.value)
+                w.writerow(next(r)) # write header
+                for i, (a, b, s) in enumerate(r):
+                    meter.update_meter(100 * i / written)
+                    w.writerow((a, b, max_value - int(s) + 1))
+        print()
+        print("done!")
+    
+    if prompt_yn("Do you wish to run buckets?"):
+        make_buckets(inverted_output if inverse else output_flag.value)
+        print('done!')
