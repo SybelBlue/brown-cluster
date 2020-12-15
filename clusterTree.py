@@ -203,17 +203,16 @@ class TreeBuilder:
 
             Consider the following example lables
 
-                   label0: 11010101
-                   label1: 110110
-
-            common prefix: 1101 (lowest common ancestor)
+                    label0:          11010101
+                    label1:          110110
+                    common prefix:   1101
+            
             They share the prefix 1101 which is the path of
             the lowest common ancestor. Therefore the distance
             between them is the sum of the lengths of the unique
-            suffixes '0101' and '10', ie 6 nodes apart.
-
-            This can be computed as the sum of lengths of each label
-            minus twice the size of the shared prefix. """
+            suffixes '0101' and '10', ie 6 nodes apart."""
+        # Sum of lengths of unique suffixes can be computed as the sum of 
+        # lengths of each label minus twice the size of the shared prefix.
         return len(label0) + len(label1) - 2 * TreeBuilder.lca_depth(label0, label1)
 
     @staticmethod
@@ -234,9 +233,10 @@ class TreeBuilder:
     def lca_depth(label0: str, label1: str):
         """Returns the level that the lowest common ancestor of label0 and label1 are on.
 
-        lca_depth('110111', '1101000') -> 4 (lca is '1101')
-
-        lca_depth('1101', '0110') -> 0 (lca is root node)
+        >>> lca_depth('110111', '1101000')
+            4  # (lca is '1101')
+        >>> lca_depth('1101', '0110')
+            0  # (lca is root node)
         """
         for i, (l0, l1) in enumerate(zip(label0, label1)):
             if l0 != l1:
@@ -245,7 +245,7 @@ class TreeBuilder:
 
     @staticmethod
     def lca_label(label0: str, label1: str):
-        """Returns the label (eg, '110111') of the lowest common ancestor of
+        """Returns the label (eg '110111') of the lowest common ancestor of
         label0 and label1 (biggest common prefix of the labels)."""
         return label0[:TreeBuilder.lca_depth(label0, label1)]
 
