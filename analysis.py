@@ -1,6 +1,7 @@
 from csv import reader, writer
 from itertools import islice
 from collections import defaultdict
+from math import ceil
 
 from terminalHelpers import ProgressMeter
 
@@ -20,20 +21,35 @@ def int_iter(path):
     for _, _, v in file_iter(path):
         yield v
 
-def make_buckets(path):
+def make_buckets(path, bucket_size=5):
+    """Counts how many words are in buckets of size 5 and prints, the returns the buckets"""
     nums = list(int_iter(path))
     max_value = max(nums)
-    print('max', max_value)
-    buckets = [0] * 50
+    print('max value:', max_value)
+
+    # add two just in case
+    num_buckets = ceil(max_value / bucket_size) + 2
+    buckets = [0] * num_buckets
     for v in nums:
-        buckets[(v - 1) // 5] += 1
-    i = len(buckets) - 1
+        buckets[(v - 1) // bucket_size] += 1
+
+    # trim empty buckets
+    i = num_buckets - 1
     while buckets[i] == 0:
         del buckets[i]
         i -= 1
     
-    for i, v in enumerate(buckets):
-        print(i * 5, '-', i * 5 + 5, ':', f'{v:>8}')
+    ### print out buckets in an aligned table
+    # the list of strings that have the value ranges for each bucket
+    range_texts = [f"{i * bucket_size} - {i * bucket_size + bucket_size}" for i in range(len(buckets))]
+    # max str len of the range texts
+    max_range_size = max(map(len, range_texts))
+    # max str len of bucket counts
+    max_count_size = max(len(str(t)) for t in buckets)
+    # format string for the table
+    table_format_str = r'{:<' + str(max_range_size) + r'} : {:>' + str(max_count_size) + r'}'
+    for size_text, count in zip(range_texts, buckets):
+        print(table_format_str.format(size_text, count))
     return buckets
 
 def make_globs(path, threshold):
@@ -77,6 +93,6 @@ def make_globs(path, threshold):
 if __name__ == "__main__":
     # for glob in islice(make_globs(4), 10):
     #     print(', '.join(glob))
-    make_buckets('inverse-output.csv')
+    make_buckets('multi-tree-output-inverted.csv')
     # with open('globs.csv', 'w+') as f:
     #     writer(f).writerows(make_globs(3))
