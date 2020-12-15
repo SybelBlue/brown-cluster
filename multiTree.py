@@ -56,7 +56,7 @@ class MultiTreeBuilder:
 
     def analyse(self):
         """ Yields (percent_completion, pairwise_score_value), or
-            (pct_complete: float, (word0: str, word1: str, score: float))"""
+            (pct_complete: float, (word0: str, word1: str, score: int))"""
         # this is the of number of yielded values for pairwise_score
         # == len(combinations(self.word_paths, 2))
         value_count = len(self.word_paths)
@@ -66,15 +66,7 @@ class MultiTreeBuilder:
             yield i / value_count * 100, result
 
     def pairwise_score(self):
-        """Yields 3-tuples containing unique pairs of words and their pairwise relation"""
-        # Edge weight calculation:
-        # For every set of words/nodes A and B:
-        #     edgeWeight = 0
-        #     For each tree with cluster size C:
-        #         maxPath = longest distance between 2 nodes, longest walk in the tree
-        #         abPath = length of path between a,b
-        #         edgeWeight += ((maxPath + 1)/(abPath + 1))*C
-
+        """Yields 3-tuples containing unique pairs of words and their pairwise relation, higher is stronger"""
         def make_bitstring_key(tree_num, str0, str1):
             """makes it so that each pair of nodes in a tree has a unique label regardless of ordering"""
             major = max(str0, str1)
@@ -193,7 +185,7 @@ if __name__ == "__main__":
                     meter.update_meter(100 * i / written)
                     w.writerow((a, b, max_value - int(s) + 1))
         print()
-        print("done!")
+        print(f"done! wrote to {inverted_output}")
     
     if prompt_yn("Do you wish to run buckets?"):
         make_buckets(inverted_output if inverse else output_flag.value)
