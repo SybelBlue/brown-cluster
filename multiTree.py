@@ -68,32 +68,35 @@ class MultiTreeBuilder:
     def pairwise_score(self):
         """Yields 3-tuples containing unique pairs of words and their pairwise relation, higher is stronger"""
         def make_bitstring_key(tree_num, str0, str1):
-            """makes it so that each pair of nodes in a tree has a unique label regardless of ordering"""
-            major = max(str0, str1)
-            minor = min(str0, str1)
-            return tree_num, major, minor
+            """makes it so that each pair of nodes in a tree has a unique label regardless of pair ordering"""
+            if str0 > str1:
+                return tree_num, str0, str1 
+            return tree_num, str1, str0
 
-        max_tree_depths = [builder.max_depth() for builder in self.tree_builders.values()]
-
-        # fill this dict
-        tree_bitstring_pair_values = dict()
+        # fill this dict with (tree: int, leaf0: str, leaf1: str) -> score: float
+        bitstring_pair_scores = dict()
+        # for each tree
         for i, builder in enumerate(self.tree_builders.values()):
+            max_depth = builder.max_depth()
+            # for each unique pair of leaf bitstrings (where a_bitstr != b_bitstr)
             for a_bitstr, b_bitstr in combinations(builder.leaf_paths, 2):
+                # get the distance between the leaves
                 ab_path = TreeBuilder.distance(a_bitstr, b_bitstr)
                 key = make_bitstring_key(i, a_bitstr, b_bitstr)
-                tree_bitstring_pair_values[key] = 2 * max_tree_depths[i] / (ab_path + 1)
+                bitstring_pair_scores[key] = 2 * max_depth / (ab_path + 1)
+            # for each leaf to itself, set the value to 2 * max_depth
             for bitstr in builder.leaf_paths:
                 key = make_bitstring_key(i, bitstr, bitstr)
-                tree_bitstring_pair_values[key] = 2 * max_tree_depths[i]
+                # ab_path is always 0
+                bitstring_pair_scores[key] = 2 * max_depth
 
-        print(f'built memoized bistring dict! (size: {len(tree_bitstring_pair_values)})')
+        print(f'built memoized bistring dict! (size: {len(bitstring_pair_scores)})')
 
         for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
-            edge_weight = 0.1
-            for i in range(len(self.trees)):
-                a_str, b_str = a_bitstrs[i], b_bitstrs[i]
-                key = make_bitstring_key(i, a_str, b_str)
-                edge_weight += tree_bitstring_pair_values[key]
+            edge_weight = 1  # lowest weight will be 1
+            for i, strs in enumerate(zip(a_bitstrs, b_bitstrs)):
+                key = make_bitstring_key(i, *strs)
+                edge_weight += bitstring_pair_scores[key]
             yield a, b, ceil(edge_weight)
 
 
