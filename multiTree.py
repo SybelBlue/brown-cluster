@@ -3,11 +3,12 @@ from collections import defaultdict
 from os.path import exists
 from sys import exit
 from itertools import combinations
-from csv import writer
+from csv import writer, reader
 from math import ceil
 
 from clusterTree import TreeBuilder
 from terminalHelpers import *
+from analysis import make_buckets
 
 class MultiTreeBuilder:
     @staticmethod
@@ -88,7 +89,10 @@ class MultiTreeBuilder:
             for a_bitstr, b_bitstr in combinations(builder.leaf_paths, 2):
                 ab_path = TreeBuilder.distance(a_bitstr, b_bitstr)
                 key = make_bitstring_key(i, a_bitstr, b_bitstr)
-                tree_bitstring_pair_values[key] = (ab_path + 1) / max_tree_depths[i]
+                tree_bitstring_pair_values[key] = 2 * max_tree_depths[i] / (ab_path + 1)
+            for bitstr in builder.leaf_paths:
+                key = make_bitstring_key(i, bitstr, bitstr)
+                tree_bitstring_pair_values[key] = 2 * max_tree_depths[i]
 
         print(f'built memoized bistring dict! (size: {len(tree_bitstring_pair_values)})')
 
@@ -96,12 +100,8 @@ class MultiTreeBuilder:
             edge_weight = 0.1
             for i in range(len(self.trees)):
                 a_str, b_str = a_bitstrs[i], b_bitstrs[i]
-                if a_str != b_str:
-                    key = make_bitstring_key(i, a_str, b_str)
-                    edge_weight += tree_bitstring_pair_values[key]
-                else:
-                    max_path = 2 * max_tree_depths[i]
-                    edge_weight += max_path
+                key = make_bitstring_key(i, a_str, b_str)
+                edge_weight += tree_bitstring_pair_values[key]
             yield a, b, ceil(edge_weight)
 
 
@@ -170,11 +170,12 @@ if __name__ == "__main__":
         csv_writer.writerow('source target weight'.split())
         meter = ProgressMeter()
         written = 0
+        max_value = 0
         for pct_completion, result in multi_builder.analyse():
             meter.update_meter(pct_completion)
-            # if result[2] < 400:
+            max_value = max(max_value, result[2])
             csv_writer.writerow(result)
             written += 1
 
     print()
-    print(f'done! wrote {written:,} lines to {output_flag.value}')
+    print(f'done! wrote {written:,} lines to {output_flag.value} (max {max_value})')
