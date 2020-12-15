@@ -122,7 +122,10 @@ class ProgressMeter():
             bar = '[' + filled * '=' + '>' \
                         + spaces * ' ' + ']'
         print(f'\rcompletion: {ceil(pct_complete)/100:>4.0%} {bar}', end='')
-        
+
+
+def prompt_yn(prompt: str):
+    return input(prompt + " (Y/n) ").strip() in ['Y', 'y', 'yes']
 
 if __name__ == "__main__":
     f = LiteralFlag('t', 'test', 'description')
