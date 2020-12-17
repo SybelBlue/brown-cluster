@@ -50,7 +50,7 @@ def make_buckets(path, bucket_size=5):
     table_format_str = r'{:<' + str(max_range_size) + r'} : {:>' + str(max_count_size) + r'}'
     for size_text, count in zip(range_texts, buckets):
         print(table_format_str.format(size_text, count))
-    return buckets
+    return range_texts, buckets
 
 def make_globs(path, threshold):
     word_to_glob_key = dict()
@@ -93,6 +93,28 @@ def make_globs(path, threshold):
 if __name__ == "__main__":
     # for glob in islice(make_globs(4), 10):
     #     print(', '.join(glob))
-    make_buckets('multi-tree-output-inverted.csv')
+    xlabel, buckets = make_buckets('multi-tree-output-inverted.csv')
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    x = np.asarray([5 * i for i in range(len(buckets))])
+    w = 4.5
+
+    fig, ax = plt.subplots()
+    b = ax.bar(x, buckets, w, bottom=0.001, color=[0xca/255, 0xa6/255, 0xdc/255])
+
+    ax.set_yscale('log')
+    ax.set_ylim([1, 10000000])
+    ax.set_ylabel('number of word pairs')
+    
+    ax.set_xticks(x - w/2)
+    ax.set_xticklabels(map(str, x))
+    ax.set_xlim([-4.5, 115])
+    ax.set_xlabel('score (lower is more related)')
+
+    plt.title('Bucketed LOLCATZ Data')
+    plt.show()
+
     # with open('globs.csv', 'w+') as f:
     #     writer(f).writerows(make_globs(3))

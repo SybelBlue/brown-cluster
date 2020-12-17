@@ -59,20 +59,27 @@ class MultiTreeBuilder:
             (pct_complete: float, (word0: str, word1: str, score: int))"""
         # this is the of number of yielded values for pairwise_score
         # == len(combinations(self.word_paths, 2))
+        bitstring_pair_scores = self.bitstring_pair_scores()
+
+        print(f'Memoized bitstring pairs in each tree! ({len(bitstring_pair_scores)} pairs)')
+
         value_count = len(self.word_paths)
         value_count *= value_count - 1
         value_count /= 2
-        for i, result in enumerate(self.pairwise_score()):
+        for i, result in enumerate(self.pairwise_score(bitstring_pair_scores)):
             yield i / value_count * 100, result
 
-    def pairwise_score(self):
-        """Yields 3-tuples containing unique pairs of words and their pairwise relation, higher is stronger"""
-        def make_bitstring_key(tree_num, str0, str1):
-            """makes it so that each pair of nodes in a tree has a unique label regardless of pair ordering"""
-            if str0 > str1:
-                return tree_num, str0, str1 
-            return tree_num, str1, str0
-
+    @staticmethod
+    def make_bitstring_key(tree_num, str0, str1):
+        """Makes it so that each pair of nodes in every tree has a unique label regardless of pair ordering"""
+        if str0 > str1:
+            return tree_num, str0, str1 
+        return tree_num, str1, str0
+    
+    def bitstring_pair_scores(self):
+        """ Returns a dict of all tree's cluster combination's scores:
+            { make_bitstring_key(tree, leaf0, leaf1) -> score: float
+        """
         # fill this dict with (tree: int, leaf0: str, leaf1: str) -> score: float
         bitstring_pair_scores = dict()
         # for each tree
@@ -82,20 +89,25 @@ class MultiTreeBuilder:
             for a_bitstr, b_bitstr in combinations(builder.leaf_paths, 2):
                 # get the distance between the leaves
                 ab_path = TreeBuilder.distance(a_bitstr, b_bitstr)
-                key = make_bitstring_key(i, a_bitstr, b_bitstr)
+                key = MultiTreeBuilder.make_bitstring_key(i, a_bitstr, b_bitstr)
                 bitstring_pair_scores[key] = 2 * max_depth / (ab_path + 1)
             # for each leaf to itself, set the value to 2 * max_depth
             for bitstr in builder.leaf_paths:
-                key = make_bitstring_key(i, bitstr, bitstr)
+                key = MultiTreeBuilder.make_bitstring_key(i, bitstr, bitstr)
                 # ab_path is always 0
                 bitstring_pair_scores[key] = 2 * max_depth
+        return bitstring_pair_scores
 
-        print(f'built memoized bistring dict! (size: {len(bitstring_pair_scores)})')
+    def pairwise_score(self, bitstring_pair_scores=None):
+        """Yields 3-tuples containing unique pairs of words and their pairwise relation, higher is stronger.
+           Can use prebuilt dict bitstring_pair_scores if don't want to recreate dict"""
+        if not bitstring_pair_scores:
+            bitstring_pair_scores = self.bitstring_pair_scores()
 
         for (a, a_bitstrs), (b, b_bitstrs) in combinations(self.word_paths.items(), 2):
             edge_weight = 1  # lowest weight will be 1
             for i, strs in enumerate(zip(a_bitstrs, b_bitstrs)):
-                key = make_bitstring_key(i, *strs)
+                key = MultiTreeBuilder.make_bitstring_key(i, *strs)
                 edge_weight += bitstring_pair_scores[key]
             yield a, b, ceil(edge_weight)
 
